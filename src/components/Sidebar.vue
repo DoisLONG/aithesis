@@ -1,8 +1,8 @@
 <template>
   <aside class="sidebar">
     <div>
-      <h1><span>🎓</span> 论文智能体</h1>
-      <small>基于 Intel OPEA 架构的云边协同写作助手</small>
+      <h1><span>🎓</span> 科研论文智能体</h1>
+      <small>基于 Intel云边协同软硬一体化架构</small>
     </div>
 
     <div class="sidebar-section">
@@ -22,9 +22,9 @@
       <h2>💻 边端环境 (Edge)</h2>
       <div class="sb-badge info">
         🔵 设备: Intel AI PC
-      </div>
+      </div><br />
       <small>芯片: Intel Core Ultra 7</small><br />
-      <small>模型: Deepseek R1 14b (INT4)</small>
+      <small>模型: Deepseek R1 14b </small>
 
       <div class="sb-progress-wrapper">
         <div class="sb-progress-label">

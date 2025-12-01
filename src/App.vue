@@ -33,11 +33,11 @@ const handleCopyToEdge = (text) => {
     <main class="main">
       <header class="main-header">
         <div class="main-title">
-          <h2><span>🎓</span>论文智能体写作助手（单页）</h2>
-          <small>Based on Intel OPEA Architecture</small>
+          <h2><span>🎓</span>科研论文智能体</h2>
+          <!-- <small>Based on Intel OPEA Architecture</small> -->
         </div>
         <button class="btn" type="button" @click="goCloud">
-          ☁️ 进入云端页面
+          ☁️ 访问云端RAG系统
         </button>
       </header>
 

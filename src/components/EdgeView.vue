@@ -115,27 +115,27 @@ const copyResult = async () => {
   <div class="card">
     <h3>🔒 本地隐私写作空间</h3>
     <p class="caption">
-      ⚠️ 此处数据仅在本地 Intel Core Ultra NPU 上处理，断网可用。 [cite: 30]
+      此处数据仅在本地 Intel Core Ultra NPU 上处理，断网可用。
     </p>
 
     <div class="grid-2" style="margin-top:10px;">
       <!-- 左：编辑器 + 本地文件 -->
       <div>
-        <label style="font-size:13px;">上传本地文件 (TXT/PDF)</label>
+        
         <input
           class="file-input"
           type="file"
           accept=".txt,application/pdf"
           @change="onFileChange"
         />
+        <label style="font-size:13px;">支持文件格式(TXT/PDF)</label>
         <div class="caption" style="white-space: pre-wrap;" v-if="fileStatus">
           {{ fileStatus }}
         </div>
-
         <textarea
           v-model="edgeText"
           class="textarea"
-          placeholder="请将云端生成的内容粘贴至此，或直接开始写作..."
+          placeholder="请将论文内容粘贴至此..."
         ></textarea>
       </div>
 
@@ -143,7 +143,7 @@ const copyResult = async () => {
       <div class="toolbox">
         <div>
           <div style="font-weight:600; margin-bottom:4px;">🛠️ 智能工具箱</div>
-          <small>Powered by OpenVINO</small>
+          <!-- <small>Powered by OpenVINO</small> -->
         </div>
 
         <button
