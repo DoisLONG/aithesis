@@ -16,6 +16,49 @@ const resultType = ref('')
 const lastSourceText = ref('')
 const loading = ref(false)
 
+// === 1. 真实接口配置 ===
+const API_BASE = 'http://2de19025.r6.nas.cpolar.cn'
+
+const endpointMap = {
+  '语法检查': '/api/grammar-check',
+  '规范润色': '/api/polish',
+  '智能翻译': '/api/translate'
+}
+
+// 调用后端接口
+const callEdgeApi = async (taskType, text) => {
+  const path = endpointMap[taskType]
+  if (!path) {
+    throw new Error(`未知任务类型: ${taskType}`)
+  }
+  const url = `${API_BASE}${path}`
+
+  const formData = new FormData()
+  formData.append('text_content', text)
+
+  const resp = await fetch(url, {
+    method: 'POST',
+    body: formData
+  })
+
+  if (!resp.ok) {
+    throw new Error(`HTTP ${resp.status}`)
+  }
+
+  const contentType = resp.headers.get('content-type') || ''
+  if (contentType.includes('application/json')) {
+    const data = await resp.json()
+    // ⚠️ 这里假设后端返回 { result: 'xxx' }，
+    // 如果你实际是 { text: 'xxx' } / { data: 'xxx' }，改一下下面这行就行
+    return data.result || data.text || data.data || JSON.stringify(data, null, 2)
+  } else {
+    // 纯文本
+    const textRes = await resp.text()
+    return textRes
+  }
+}
+
+// === 2. mock 兜底（接口挂了还能用 demo） ===
 const mockEdgeInference = (text, taskType) => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -33,10 +76,11 @@ const mockEdgeInference = (text, taskType) => {
           '**[译文]**\n本研究探讨了人工智能在现代教育系统中的影响...'
       }
       resolve(out)
-    }, 1200)
+    }, 800)
   })
 }
 
+// props 变化时更新编辑器
 watch(
   () => props.prefillText,
   (val) => {
@@ -70,6 +114,7 @@ const onFileChange = (e) => {
   }
 }
 
+// === 3. 点击按钮：先调后端，如果失败再用 mock ===
 const runTool = async (taskType, label) => {
   const effective = sourceText.value || edgeText.value
   if (!effective || !effective.trim()) {
@@ -77,11 +122,20 @@ const runTool = async (taskType, label) => {
     return
   }
   loading.value = true
-  const res = await mockEdgeInference(effective, taskType)
-  loading.value = false
-  result.value = res
-  resultType.value = label
-  lastSourceText.value = effective
+  try {
+    let res
+    try {
+      res = await callEdgeApi(taskType, effective)
+    } catch (err) {
+      console.error('调用后端接口失败，使用 mock 结果作为兜底:', err)
+      res = await mockEdgeInference(effective, taskType)
+    }
+    result.value = res
+    resultType.value = label
+    lastSourceText.value = effective
+  } finally {
+    loading.value = false
+  }
 }
 
 // 🔹 复制结果到剪贴板
