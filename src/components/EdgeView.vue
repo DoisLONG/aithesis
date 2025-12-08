@@ -16,9 +16,13 @@ const resultType = ref('')
 const lastSourceText = ref('')
 const loading = ref(false)
 
-// === 1. 真实接口配置 ===
-const API_BASE = 'http://2de19025.r6.nas.cpolar.cn'
+/** ================= 1. 真实接口配置 ================= **/
 
+// 开发阶段：后端跑在本机 5000 端口
+// 后面上专用机器，可以改成 http://<your-host>:5000，或者从环境变量里读
+const API_BASE = 'http://localhost:5000'
+
+// 映射任务类型 -> 后端路径
 const endpointMap = {
   '语法检查': '/api/grammar-check',
   '规范润色': '/api/polish',
@@ -34,6 +38,7 @@ const callEdgeApi = async (taskType, text) => {
   const url = `${API_BASE}${path}`
 
   const formData = new FormData()
+  // 和 curl 一致：text_content=xxx
   formData.append('text_content', text)
 
   const resp = await fetch(url, {
@@ -48,17 +53,24 @@ const callEdgeApi = async (taskType, text) => {
   const contentType = resp.headers.get('content-type') || ''
   if (contentType.includes('application/json')) {
     const data = await resp.json()
-    // ⚠️ 这里假设后端返回 { result: 'xxx' }，
-    // 如果你实际是 { text: 'xxx' } / { data: 'xxx' }，改一下下面这行就行
-    return data.result || data.text || data.data || JSON.stringify(data, null, 2)
+    // ✅ 这里根据你现在的返回结构优先用 data.new
+    // 如果之后 polish/translate 返回字段名不一样，可以在这里统一兼容
+    return (
+      data.new ||
+      data.result ||
+      data.text ||
+      data.data ||
+      JSON.stringify(data, null, 2)
+    )
   } else {
-    // 纯文本
+    // 纯文本返回
     const textRes = await resp.text()
     return textRes
   }
 }
 
-// === 2. mock 兜底（接口挂了还能用 demo） ===
+/** ================= 2. mock 兜底（接口挂了还能 demo） ================= **/
+
 const mockEdgeInference = (text, taskType) => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -80,7 +92,8 @@ const mockEdgeInference = (text, taskType) => {
   })
 }
 
-// props 变化时更新编辑器
+/** ================= 3. 监听 prefillText 变化 ================= **/
+
 watch(
   () => props.prefillText,
   (val) => {
@@ -90,6 +103,8 @@ watch(
     }
   }
 )
+
+/** ================= 4. 文件上传 ================= **/
 
 const onFileChange = (e) => {
   const file = e.target.files[0]
@@ -108,13 +123,14 @@ const onFileChange = (e) => {
     reader.readAsText(file, 'utf-8')
   } else if (file.type === 'application/pdf') {
     fileStatus.value =
-      `✅ 已上传 PDF: ${file.name}\n前端 demo 暂未解析 PDF 文本，可在 Vue 阶段对接后端解析。`
+      `✅ 已上传 PDF: ${file.name}\n前端 demo 暂未解析 PDF 文本，可在后续对接后端解析。`
   } else {
     fileStatus.value = '不支持的文件类型，请上传 TXT 或 PDF。'
   }
 }
 
-// === 3. 点击按钮：先调后端，如果失败再用 mock ===
+/** ================= 5. 点击工具按钮 ================= **/
+
 const runTool = async (taskType, label) => {
   const effective = sourceText.value || edgeText.value
   if (!effective || !effective.trim()) {
@@ -125,9 +141,11 @@ const runTool = async (taskType, label) => {
   try {
     let res
     try {
+      // 🚀 优先调用真实后端接口
       res = await callEdgeApi(taskType, effective)
     } catch (err) {
       console.error('调用后端接口失败，使用 mock 结果作为兜底:', err)
+      // ❗ 如果你不想兜底，可以直接 throw 或提示错误
       res = await mockEdgeInference(effective, taskType)
     }
     result.value = res
@@ -138,7 +156,8 @@ const runTool = async (taskType, label) => {
   }
 }
 
-// 🔹 复制结果到剪贴板
+/** ================= 6. 复制结果 ================= **/
+
 const copyResult = async () => {
   if (!result.value) return
   try {
@@ -250,7 +269,12 @@ const copyResult = async () => {
           >
             <span>AI 处理后</span>
             <!-- 复制按钮 -->
-            <button type="button" class="copy-icon-btn" @click="copyResult" title="复制结果">
+            <button
+              type="button"
+              class="copy-icon-btn"
+              @click="copyResult"
+              title="复制结果"
+            >
               📋
             </button>
           </div>
